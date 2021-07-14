@@ -256,7 +256,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     function swapExactTokensForETHSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external;
 }
 
-contract STAR is Context, IERC20, Ownable {
+contract test7v7 is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     mapping (address => uint256) private _rOwned;
@@ -267,19 +267,19 @@ contract STAR is Context, IERC20, Ownable {
     address[] private _excluded;
     mapping (address => bool) private _isBlackListedBot;
     address[] private _blackListedBots;
-    address payable public _burnpoolWalletAddress;
+    address payable public _luckypoolWalletAddress;
     uint256 private constant MAX = ~uint256(0);
-    uint256 private _tTotal = 500000000000000 * 10**9;
+    uint256 private _tTotal = 1000000000 * 10**6 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
-    string private _name = "Pornstar";
-    string private _symbol = "STAR";
+    string private _name = "Test7v7";
+    string private _symbol = "T7v7";
     uint8 private _decimals = 9;
-    uint256 public _taxFee = 4;
+    uint256 public _taxFee = 2;
     uint256 private _previousTaxFee = _taxFee;
-    uint256 public _burnpoolFee = 2;
-    uint256 private _previousBurnpoolFee = _burnpoolFee;
-    uint256 public _liquidityFee = 4;
+    uint256 public _luckypoolFee = 5;
+    uint256 private _previousluckypoolFee = _luckypoolFee;
+    uint256 public _liquidityFee = 5;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -296,10 +296,11 @@ contract STAR is Context, IERC20, Ownable {
         _;
         inSwapAndLiquify = false;
     }
-    constructor (address payable burnpoolWalletAddress) {
-        _burnpoolWalletAddress = burnpoolWalletAddress;
+    constructor (address payable luckypoolWalletAddress) {
+        _luckypoolWalletAddress = luckypoolWalletAddress;
         _rOwned[owner()] = _rTotal;
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1); //TestNet
+        //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E); //Mainnet
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
         uniswapV2Router = _uniswapV2Router;
@@ -356,8 +357,8 @@ contract STAR is Context, IERC20, Ownable {
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
         return _amount.mul(_taxFee).div(10**2);
     }
-    function calculateBurnpoolFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(_burnpoolFee).div(10**2);
+    function calculateluckypoolFee(uint256 _amount) private view returns (uint256) {
+        return _amount.mul(_luckypoolFee).div(10**2);
     }
     function calculateLiquidityFee(uint256 _amount) private view returns (uint256) {
         return _amount.mul(_liquidityFee).div(10**2);
@@ -406,13 +407,13 @@ contract STAR is Context, IERC20, Ownable {
         }
     }
     function _transferBothExcluded(address sender, address recipient, uint256 tAmount) private {
-    (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurnpool) = _getValues(tAmount);
+    (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tluckypool) = _getValues(tAmount);
         _tOwned[sender] = _tOwned[sender].sub(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);        
         _takeLiquidity(tLiquidity);
-        _takeBurnpool(tBurnpool, sender);
+        _takeluckypool(tluckypool, sender);
         _reflectFee(rFee, tFee);
     emit Transfer(sender, recipient, tTransferAmount);
     }
@@ -425,14 +426,14 @@ contract STAR is Context, IERC20, Ownable {
     function setTaxFeePercent(uint256 taxFee) external onlyOwner() {
         _taxFee = taxFee;
     }
-    function setBurnpoolFeePercent(uint256 burnpoolFee) external onlyOwner() {
-        _burnpoolFee = burnpoolFee;
+    function setluckypoolFeePercent(uint256 luckypoolFee) external onlyOwner() {
+        _luckypoolFee = luckypoolFee;
     }
     function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner() {
         _liquidityFee = liquidityFee;
     }
-    function _setBurnpoolWalletAddress(address payable burnpoolWalletAddress) external onlyOwner() {
-        _burnpoolWalletAddress = burnpoolWalletAddress;
+    function _setluckypoolWalletAddress(address payable luckypoolWalletAddress) external onlyOwner() {
+        _luckypoolWalletAddress = luckypoolWalletAddress;
     }
     function setmaxTxAmount(uint256 maxTxAmount) external onlyOwner() {
         _maxTxAmount = maxTxAmount;
@@ -450,23 +451,23 @@ contract STAR is Context, IERC20, Ownable {
         _tFeeTotal = _tFeeTotal.add(tFee);
     }
     function _getValues(uint256 tAmount) private view returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
-        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurnpool) = _getTValues(tAmount);
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, tBurnpool, _getRate());
-        return (rAmount, rTransferAmount, rFee, tTransferAmount, tFee, tLiquidity, tBurnpool);
+        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tluckypool) = _getTValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, tluckypool, _getRate());
+        return (rAmount, rTransferAmount, rFee, tTransferAmount, tFee, tLiquidity, tluckypool);
     }
     function _getTValues(uint256 tAmount) private view returns (uint256, uint256, uint256, uint256) {
         uint256 tFee = calculateTaxFee(tAmount);
         uint256 tLiquidity = calculateLiquidityFee(tAmount);
-        uint256 tBurnpool = calculateBurnpoolFee(tAmount);
-        uint256 tTransferAmount = tAmount.sub(tFee).sub(tLiquidity).sub(tBurnpool);
-        return (tTransferAmount, tFee, tLiquidity, tBurnpool);
+        uint256 tluckypool = calculateluckypoolFee(tAmount);
+        uint256 tTransferAmount = tAmount.sub(tFee).sub(tLiquidity).sub(tluckypool);
+        return (tTransferAmount, tFee, tLiquidity, tluckypool);
     }
-    function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurnpool, uint256 currentRate) private pure returns (uint256, uint256, uint256) {
+    function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity, uint256 tluckypool, uint256 currentRate) private pure returns (uint256, uint256, uint256) {
         uint256 rAmount = tAmount.mul(currentRate);
         uint256 rFee = tFee.mul(currentRate);
         uint256 rLiquidity = tLiquidity.mul(currentRate);
-        uint256 rBurnpool = tBurnpool.mul(currentRate);
-        uint256 rTransferAmount = rAmount.sub(rFee).sub(rLiquidity).sub(rBurnpool);
+        uint256 rluckypool = tluckypool.mul(currentRate);
+        uint256 rTransferAmount = rAmount.sub(rFee).sub(rLiquidity).sub(rluckypool);
         return (rAmount, rTransferAmount, rFee);
     }
     function _getRate() private view returns(uint256) {
@@ -491,13 +492,13 @@ contract STAR is Context, IERC20, Ownable {
         if(_isExcluded[address(this)])
             _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
     }
-    function _takeBurnpool(uint256 tBurnpool, address sender) private {
+    function _takeluckypool(uint256 tluckypool, address sender) private {
         uint256 currentRate =  _getRate();
-        uint256 rBurnpool = tBurnpool.mul(currentRate);
-        _rOwned[_burnpoolWalletAddress] = _rOwned[_burnpoolWalletAddress].add(rBurnpool);
-        if(_isExcluded[_burnpoolWalletAddress])
-            _tOwned[_burnpoolWalletAddress] = _tOwned[_burnpoolWalletAddress].add(tBurnpool);
-        emit Transfer(sender, _burnpoolWalletAddress, tBurnpool);
+        uint256 rluckypool = tluckypool.mul(currentRate);
+        _rOwned[_luckypoolWalletAddress] = _rOwned[_luckypoolWalletAddress].add(rluckypool);
+        if(_isExcluded[_luckypoolWalletAddress])
+            _tOwned[_luckypoolWalletAddress] = _tOwned[_luckypoolWalletAddress].add(tluckypool);
+        emit Transfer(sender, _luckypoolWalletAddress, tluckypool);
     }
 
     function addBotToBlackList(address account) external onlyOwner() {
@@ -521,15 +522,15 @@ contract STAR is Context, IERC20, Ownable {
     function removeAllFee() private {
         if(_taxFee == 0 && _liquidityFee == 0) return;
         _previousTaxFee = _taxFee;
-        _previousBurnpoolFee = _burnpoolFee;
+        _previousluckypoolFee = _luckypoolFee;
         _previousLiquidityFee = _liquidityFee;
         _taxFee = 0;
-        _burnpoolFee = 0;
+        _luckypoolFee = 0;
         _liquidityFee = 0;
     }
     function restoreAllFee() private {
         _taxFee = _previousTaxFee;
-        _burnpoolFee = _previousBurnpoolFee;
+        _luckypoolFee = _previousluckypoolFee;
         _liquidityFee = _previousLiquidityFee;
     }
     function isExcludedFromFee(address account) public view returns(bool) {
@@ -626,31 +627,31 @@ contract STAR is Context, IERC20, Ownable {
             restoreAllFee();
     }
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurnpool) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tluckypool) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
         _takeLiquidity(tLiquidity);
-        _takeBurnpool(tBurnpool, sender);
+        _takeluckypool(tluckypool, sender);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
     function _transferToExcluded(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurnpool) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tluckypool) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);           
         _takeLiquidity(tLiquidity);
-        _takeBurnpool(tBurnpool, sender);
+        _takeluckypool(tluckypool, sender);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
     function _transferFromExcluded(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurnpool) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tluckypool) = _getValues(tAmount);
         _tOwned[sender] = _tOwned[sender].sub(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);   
         _takeLiquidity(tLiquidity);
-        _takeBurnpool(tBurnpool, sender);
+        _takeluckypool(tluckypool, sender);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
